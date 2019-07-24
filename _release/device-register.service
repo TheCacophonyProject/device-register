@@ -3,7 +3,7 @@ Description=Cacophony device register service
 After=multi-user.target network.target
 
 [Service]
-ExecStart=/usr/bin/device-register
+ExecStart=/usr/bin/device-register -r
 Restart=on-failure
 RestartSec=5s
 
