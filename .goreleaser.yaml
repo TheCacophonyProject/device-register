@@ -1,0 +1,32 @@
+project_name: device-register
+release:
+  github:
+    owner: TheCacophonyProject
+    name: device-register
+  name_template: '{{.Tag}}'
+builds:
+- goos:
+  - linux
+  goarch:
+  - arm
+  goarm:
+  - "7"
+  main: .
+  ldflags: -s -w -X main.version={{.Version}}
+  binary: device-register
+
+nfpm:
+  vendor: The Cacophony Project
+  homepage: http://cacophony.org.nz/
+  maintainer: Cacophony Developers <coredev@cacophony.org.nz>
+  description: Register device to cacophony API
+  license: GPL v3.0
+  name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Arch }}"
+  formats:
+    - deb
+  bindir: /usr/bin
+  files:
+    "_release/device-register.service": "/etc/systemd/system/device-register.service"
+checksum:
+  name_template: '{{ .ProjectName }}_{{ .Version }}_checksums.txt'
+dist: dist

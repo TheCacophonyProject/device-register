@@ -1,0 +1,11 @@
+[Unit]
+Description=Cacophony device register service
+After=multi-user.target network.target
+
+[Service]
+ExecStart=/usr/bin/device-register
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
