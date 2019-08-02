@@ -5,8 +5,7 @@ ConditionPathExists=!/etc/salt/minion_id
 
 [Service]
 ExecStart=/usr/bin/device-register -r
-Restart=on-failure
-RestartSec=5s
+Type=oneshot
 
 [Install]
 WantedBy=multi-user.target
