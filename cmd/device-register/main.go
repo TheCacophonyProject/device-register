@@ -1,4 +1,4 @@
-// device-register - register the camera and save the config files
+// device-register - helper for registering and renaming cacophony devices
 //  Copyright (C) 2019, The Cacophony Project
 //
 // This program is free software: you can redistribute it and/or modify

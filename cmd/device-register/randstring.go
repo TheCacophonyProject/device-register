@@ -1,5 +1,5 @@
-// thermal-uploader - upload thermal video recordings in CPTV format to the project's API server.
-//  Copyright (C) 2017, The Cacophony Project
+// device-register - helper for registering and renaming cacophony devices
+//  Copyright (C) 2019, The Cacophony Project
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
