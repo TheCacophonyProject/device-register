@@ -18,7 +18,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"log"
 
 	"github.com/TheCacophonyProject/go-api"
@@ -54,7 +53,7 @@ func runMain() error {
 	log.Printf("running version: %s", version)
 
 	if args.Group == "" && args.Name == "" {
-		return errors.New("new group or new device must be set")
+		return errors.New("new group and/or new device must be set")
 	}
 
 	apiClient, err := api.New()
@@ -79,7 +78,6 @@ func runMain() error {
 	log.Printf("setting name to '%s' and group to '%s'", name, group)
 
 	if err := apiClient.Rename(name, group); err != nil {
-		fmt.Printf(err.Error())
 		return err
 	}
 	return nil

@@ -36,7 +36,7 @@ const (
 	connectionTimeout       = time.Minute * 2
 	connectionRetryInterval = time.Minute * 10
 	defaultGroup            = "new"
-	apiURL                  = "https://api.cacophon.org.nz"
+	apiURL                  = "https://api.cacophony.org.nz"
 	minionIDFile            = "/etc/salt/minion_id"
 	deviceConfigFile        = "/etc/cacophony/device.yaml"
 	devicePrivateConfigFile = "/etc/cacophony/device-priv.yaml"
@@ -151,31 +151,27 @@ func deleteDeviceConfigFiles() error {
 }
 
 func removeFileIfExist(path string) error {
-	if _, err := os.Stat(path); err == nil {
-		if err := os.Remove(path); err != nil {
-			return err
-		}
+	err := os.Remove(path)
+	if err == nil || os.IsNotExist(err) {
+		return nil
 	}
-	return nil
+	return err
 }
 
 func checkMinionIDFile() error {
-	if _, err := os.Stat(minionIDFile); err == nil {
-		log.Println("minion id file exists already, reading id file")
-		raw, err := ioutil.ReadFile(minionIDFile)
-		if err != nil {
-			return err
-		}
-
-		if len(raw) == 0 {
-			log.Println("minion id is empty. Will make new minion id")
-		} else {
-			log.Println("minion ID:", string(raw))
-			log.Println("exiting as minion ID is already set")
-			os.Exit(0)
-		}
-	} else if !os.IsNotExist(err) {
+	raw, err := ioutil.ReadFile(minionIDFile)
+	if os.IsNotExist(err) {
+		return nil
+	} else if err != nil {
 		return err
+	}
+	log.Println("minion id file exists already, reading id file")
+	if len(raw) == 0 {
+		log.Println("minion id is empty. Will make new minion id")
+	} else {
+		log.Println("minion ID:", string(raw))
+		log.Println("exiting as minion ID is already set")
+		os.Exit(0)
 	}
 	return nil
 }
