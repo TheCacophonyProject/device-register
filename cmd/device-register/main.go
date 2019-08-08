@@ -36,16 +36,20 @@ const (
 	connectionTimeout       = time.Minute * 2
 	connectionRetryInterval = time.Minute * 10
 	defaultGroup            = "new"
-	apiURL                  = "http://192.168.178.20:1080"
+	apiURL                  = "https://api.cacophon.org.nz"
 	minionIDFile            = "/etc/salt/minion_id"
+	deviceConfigFile        = "/etc/cacophony/device.yaml"
+	devicePrivateConfigFile = "/etc/cacophony/device-priv.yaml"
 	minionIDPrefix          = "pi-"
 )
 
 var version = "<not set>"
 
 type Args struct {
-	Reboot bool   `arg:"-r,--reboot" help:"reboot device after registering"`
-	API    string `arg:"-a,--api" help:"url for the api server to register to"`
+	Reboot             bool   `arg:"-r,--reboot" help:"reboot device after registering"`
+	API                string `arg:"-a,--api" help:"url for the api server to register to"`
+	IgnoreMinionID     bool   `arg:"-i,--ignore-minion-id" help:"don't check or write to minion id file"`
+	RemoveDeviceConfig bool   `arg:"-d,--remove-device-Config" help:"remove the device config files. This is useful if you need to register as a new device or to a different server. This normally wants to be used with '-i'"`
 }
 
 func (Args) Version() string {
@@ -77,10 +81,11 @@ func runMain() error {
 		return err
 	}
 	apiString := apiURL.String()
-	log.Println(apiString)
 
-	if err := checkMinionIDFile(); err != nil {
-		return err
+	if !args.IgnoreMinionID {
+		if err := checkMinionIDFile(); err != nil {
+			return err
+		}
 	}
 
 	cr := connrequester.NewConnectionRequester()
@@ -88,6 +93,12 @@ func runMain() error {
 	cr.Start()
 	cr.WaitUntilUpLoop(connectionTimeout, connectionRetryInterval, -1)
 	log.Println("internet connection made")
+
+	if args.RemoveDeviceConfig {
+		if err := deleteDeviceConfigFiles(); err != nil {
+			return err
+		}
+	}
 
 	rand.Seed(time.Now().UnixNano())
 	deviceName := petname.Generate(3, "-")
@@ -97,23 +108,51 @@ func runMain() error {
 	}
 	cr.Stop()
 	log.Println("registered")
-	log.Printf("devicename: %s, deviceID: %d", deviceName, apiClient.DeviceID())
+	log.Printf("devicename: '%s', deviceID: '%d', API: '%s'", deviceName, apiClient.DeviceID(), apiString)
 
+	if !args.IgnoreMinionID {
+		if err := writeToMinionIDFile(apiClient.DeviceID()); err != nil {
+			return err
+		}
+	}
+
+	if args.Reboot {
+		log.Println("restarting device")
+		if err := exec.Command("reboot").Run(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func writeToMinionIDFile(deviceID int) error {
 	f, err := os.Create(minionIDFile)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 
-	name := minionIDPrefix + strconv.Itoa(apiClient.DeviceID())
+	name := minionIDPrefix + strconv.Itoa(deviceID)
 	log.Printf("setting minion id to '%s'", name)
 	if _, err := f.WriteString(name); err != nil {
 		return err
 	}
+	return nil
+}
 
-	if args.Reboot {
-		log.Println("restarting device")
-		if err := exec.Command("reboot").Run(); err != nil {
+func deleteDeviceConfigFiles() error {
+	if err := removeFileIfExist(deviceConfigFile); err != nil {
+		return err
+	}
+	if err := removeFileIfExist(devicePrivateConfigFile); err != nil {
+		return err
+	}
+	return nil
+}
+
+func removeFileIfExist(path string) error {
+	if _, err := os.Stat(path); err == nil {
+		if err := os.Remove(path); err != nil {
 			return err
 		}
 	}
