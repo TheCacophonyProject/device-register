@@ -37,10 +37,12 @@ const (
 	connectionRetryInterval = time.Minute * 10
 	defaultGroup            = "new"
 	apiURL                  = "https://api.cacophony.org.nz"
+	testAPIURL              = "https://api-test.cacophony.org.nz"
 	minionIDFile            = "/etc/salt/minion_id"
 	deviceConfigFile        = "/etc/cacophony/device.yaml"
 	devicePrivateConfigFile = "/etc/cacophony/device-priv.yaml"
 	minionIDPrefix          = "pi-"
+	minionIDTestPrefix      = "pi-test-"
 )
 
 var version = "<not set>"
@@ -50,6 +52,7 @@ type Args struct {
 	API                string `arg:"-a,--api" help:"url for the api server to register to"`
 	IgnoreMinionID     bool   `arg:"-i,--ignore-minion-id" help:"don't check or write to minion id file"`
 	RemoveDeviceConfig bool   `arg:"-d,--remove-device-Config" help:"remove the device config files. This is useful if you need to register as a new device or to a different server. This normally wants to be used with '-i'"`
+	TestAPI            bool   `arg:"-t,--test-api" help:"use the test api. This will overwrite the api param"`
 }
 
 func (Args) Version() string {
@@ -61,6 +64,9 @@ func procArgs() Args {
 		API: apiURL,
 	}
 	arg.MustParse(&args)
+	if args.TestAPI {
+		args.API = testAPIURL
+	}
 	return args
 }
 
@@ -111,7 +117,14 @@ func runMain() error {
 	log.Printf("devicename: '%s', deviceID: '%d', API: '%s'", deviceName, apiClient.DeviceID(), apiString)
 
 	if !args.IgnoreMinionID {
-		if err := writeToMinionIDFile(apiClient.DeviceID()); err != nil {
+		var name string
+		if args.TestAPI {
+			name = minionIDTestPrefix
+		} else {
+			name = minionIDPrefix
+		}
+		name = name + strconv.Itoa(apiClient.DeviceID())
+		if err := writeToMinionIDFile(name); err != nil {
 			return err
 		}
 	}
@@ -125,14 +138,13 @@ func runMain() error {
 	return nil
 }
 
-func writeToMinionIDFile(deviceID int) error {
+func writeToMinionIDFile(name string) error {
 	f, err := os.Create(minionIDFile)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 
-	name := minionIDPrefix + strconv.Itoa(deviceID)
 	log.Printf("setting minion id to '%s'", name)
 	if _, err := f.WriteString(name); err != nil {
 		return err
