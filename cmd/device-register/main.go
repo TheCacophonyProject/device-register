@@ -52,7 +52,7 @@ type Args struct {
 	API                string `arg:"-a,--api" help:"url for the api server to register to"`
 	IgnoreMinionID     bool   `arg:"-i,--ignore-minion-id" help:"don't check or write to minion id file"`
 	RemoveDeviceConfig bool   `arg:"-d,--remove-device-Config" help:"remove the device config files. This is useful if you need to register as a new device or to a different server. This normally wants to be used with '-i'"`
-	TestAPI            bool   `arg:"-t,--test-api" help:"use the test api. This will overwrite the api param"`
+	TestAPI            bool   `arg:"-t,--test-api" help:"use the test API. This will overwrite the API param"`
 }
 
 func (Args) Version() string {
