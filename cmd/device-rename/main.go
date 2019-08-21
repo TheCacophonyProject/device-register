@@ -29,6 +29,7 @@ var version = "<not set>"
 type Args struct {
 	Name  string `arg:"-n,--name" help:"new devicename"`
 	Group string `arg:"-g,--group" help:"new groupname"`
+	Force bool   `arg:"-f,--force" help:"force rename to run even if no group or name is given"`
 }
 
 func (Args) Version() string {
@@ -52,7 +53,7 @@ func runMain() error {
 	args := procArgs()
 	log.Printf("running version: %s", version)
 
-	if args.Group == "" && args.Name == "" {
+	if !args.Force && args.Group == "" && args.Name == "" {
 		return errors.New("new group and/or new device must be set")
 	}
 
