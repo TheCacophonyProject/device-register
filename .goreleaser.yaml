@@ -16,16 +16,6 @@ builds:
   main: ./cmd/device-register
   ldflags: -s -w -X main.version={{.Version}}
   binary: device-register
-- id: device-rename
-  goos:
-  - linux
-  goarch:
-  - arm
-  goarm:
-  - "7"
-  main: ./cmd/device-rename
-  ldflags: -s -w -X main.version={{.Version}}
-  binary: device-rename
 
 nfpms:
   - vendor: The Cacophony Project
