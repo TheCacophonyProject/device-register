@@ -72,7 +72,6 @@ func procArgs() Args {
 	arg.MustParse(&args)
 
 	// Don't define these when args is declared so they are not shown as defaults in help
-	rand.Seed(time.Now().UnixNano())
 	if args.Name == "" {
 		args.Name = petname.Generate(3, "-")
 	}
@@ -87,6 +86,7 @@ func procArgs() Args {
 }
 
 func main() {
+	rand.Seed(time.Now().UnixNano())
 	err := runMain()
 	if err != nil {
 		log.Fatal(err)
