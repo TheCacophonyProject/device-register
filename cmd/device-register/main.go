@@ -54,8 +54,8 @@ type Args struct {
 	RemoveDeviceConfig bool   `arg:"-d,--remove-device-config" help:"remove the device config files. This is useful if you need to register as a new device or to a different server. This normally wants to be used with '-i'"`
 	TestAPI            bool   `arg:"-t,--test-api" help:"use the test API. This will overwrite the API param"`
 	Reregister         bool   `arg:"--reregister" help:"reregister the device to the same API with a new name and group"`
-	Group              string `arg:"-g,--group" help:"new groupname."`
-	Name               string `arg:"-n,--name" help:"new devicename. If not given a random name will be generated"`
+	Group              string `arg:"-g,--group" help:"new group name."`
+	Name               string `arg:"-n,--name" help:"new device name. If not given a random name will be generated"`
 	Password           string `arg:"-p,--password" help:"new password. If not given a random password will be generated"`
 }
 
