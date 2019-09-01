@@ -51,8 +51,12 @@ type Args struct {
 	Reboot             bool   `arg:"-r,--reboot" help:"reboot device after registering"`
 	API                string `arg:"-a,--api" help:"url for the api server to register to"`
 	IgnoreMinionID     bool   `arg:"-i,--ignore-minion-id" help:"don't check or write to minion id file"`
-	RemoveDeviceConfig bool   `arg:"-d,--remove-device-Config" help:"remove the device config files. This is useful if you need to register as a new device or to a different server. This normally wants to be used with '-i'"`
+	RemoveDeviceConfig bool   `arg:"-d,--remove-device-config" help:"remove the device config files. This is useful if you need to register as a new device or to a different server. This normally wants to be used with '-i'"`
 	TestAPI            bool   `arg:"-t,--test-api" help:"use the test API. This will overwrite the API param"`
+	Reregister         bool   `arg:"--reregister" help:"reregister the device to the same API with a new name and group"`
+	Group              string `arg:"-g,--group" help:"new group name."`
+	Name               string `arg:"-n,--name" help:"new device name. If not given a random name will be generated"`
+	Password           string `arg:"-p,--password" help:"new password. If not given a random password will be generated"`
 }
 
 func (Args) Version() string {
@@ -61,16 +65,28 @@ func (Args) Version() string {
 
 func procArgs() Args {
 	args := Args{
-		API: apiURL,
+		API:   apiURL,
+		Group: defaultGroup,
 	}
+
 	arg.MustParse(&args)
+
+	// Don't define these when args is declared so they are not shown as defaults in help
+	if args.Name == "" {
+		args.Name = petname.Generate(3, "-")
+	}
+	if args.Password == "" {
+		args.Password = randString(20)
+	}
 	if args.TestAPI {
 		args.API = testAPIURL
 	}
+
 	return args
 }
 
 func main() {
+	rand.Seed(time.Now().UnixNano())
 	err := runMain()
 	if err != nil {
 		log.Fatal(err)
@@ -82,6 +98,33 @@ func runMain() error {
 	args := procArgs()
 	log.Printf("running version: %s", version)
 
+	cr := connrequester.NewConnectionRequester()
+	log.Println("requesting internet connection")
+	cr.Start()
+	cr.WaitUntilUpLoop(connectionTimeout, connectionRetryInterval, -1)
+	log.Println("internet connection made")
+	defer cr.Stop()
+
+	if args.Reregister {
+		if err := reregister(args); err != nil {
+			return err
+		}
+	} else {
+		if err := register(args); err != nil {
+			return err
+		}
+	}
+
+	if args.Reboot {
+		log.Println("restarting device")
+		if err := exec.Command("reboot").Run(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func register(args Args) error {
 	apiURL, err := url.ParseRequestURI(args.API)
 	if err != nil {
 		return err
@@ -94,27 +137,18 @@ func runMain() error {
 		}
 	}
 
-	cr := connrequester.NewConnectionRequester()
-	log.Println("requesting internet connection")
-	cr.Start()
-	cr.WaitUntilUpLoop(connectionTimeout, connectionRetryInterval, -1)
-	log.Println("internet connection made")
-
 	if args.RemoveDeviceConfig {
 		if err := deleteDeviceConfigFiles(); err != nil {
 			return err
 		}
 	}
 
-	rand.Seed(time.Now().UnixNano())
-	deviceName := petname.Generate(3, "-")
-	apiClient, err := api.Register(deviceName, randString(20), defaultGroup, apiString)
+	apiClient, err := api.Register(args.Name, args.Password, args.Group, apiString)
 	if err != nil {
 		return err
 	}
-	cr.Stop()
 	log.Println("registered")
-	log.Printf("devicename: '%s', deviceID: '%d', API: '%s'", deviceName, apiClient.DeviceID(), apiString)
+	log.Printf("devicename: '%s', deviceID: '%d', API: '%s'", args.Name, apiClient.DeviceID(), apiString)
 
 	if !args.IgnoreMinionID {
 		var name string
@@ -125,13 +159,6 @@ func runMain() error {
 		}
 		name = name + strconv.Itoa(apiClient.DeviceID())
 		if err := writeToMinionIDFile(name); err != nil {
-			return err
-		}
-	}
-
-	if args.Reboot {
-		log.Println("restarting device")
-		if err := exec.Command("reboot").Run(); err != nil {
 			return err
 		}
 	}
@@ -186,4 +213,13 @@ func checkMinionIDFile() error {
 		os.Exit(0)
 	}
 	return nil
+}
+
+func reregister(args Args) error {
+	apiClient, err := api.New()
+	if err != nil {
+		return err
+	}
+	log.Printf("reregister with name '%s' and group '%s'", args.Name, args.Group)
+	return apiClient.Reregister(args.Name, args.Group, args.Password)
 }
