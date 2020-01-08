@@ -11,6 +11,7 @@ builds:
   - linux
   goarch:
   - arm
+  - amd64
   goarm:
   - "7"
   main: ./cmd/device-register
