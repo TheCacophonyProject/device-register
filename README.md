@@ -3,11 +3,11 @@
 `device-register` registers a device on the cacophony server so a device can upload thermal or audio recordings to the server
 
 Project | device-register
----|---
-Platform | Thermal recorder (Raspbian)
-Requires | Running [`cacophony-api`](https://github.com/TheCacophonyProject/cacophony-api) server to connect to
-Build Status | [![Build Status](https://api.travis-ci.com/TheCacophonyProject/device-register.svg?branch=master)](https://travis-ci.com/TheCacophonyProject/device-register)
-Licence | GNU General Public License v3.0
+---|--- |
+Platform | Thermal camera (Raspbian) |
+Requires | Running [`cacophony-api`](https://github.com/TheCacophonyProject/cacophony-api) server to connect to |
+Build Status | [![Build Status](https://api.travis-ci.com/TheCacophonyProject/device-register.svg?branch=master)](https://travis-ci.com/TheCacophonyProject/device-register) |
+Licence | GNU General Public License v3.0 |
 
 ## Instructions
 
@@ -27,5 +27,5 @@ Make sure the [`cacophony-api`](https://github.com/TheCacophonyProject/cacophony
 > ./device-register --help
 ```
 
-Releases are created using travis and git and saved [on Github](https://github.com/TheCacophonyProject/device-register/releases).   Follow our [release instructions](https://docs.cacophony.org.nz/home/creating-releases) to create a new release
+Releases are created using travis and git and saved [on Github](https://github.com/TheCacophonyProject/device-register/releases).   Follow our [release instructions](https://docs.cacophony.org.nz/home/creating-releases) to create a new release.
 
