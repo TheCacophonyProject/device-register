@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/TheCacophonyProject/go-api"
+	config "github.com/TheCacophonyProject/go-config"
 	"github.com/TheCacophonyProject/modemd/connrequester"
 	arg "github.com/alexflint/go-arg"
 	petname "github.com/dustinkirkland/golang-petname"
@@ -39,8 +40,6 @@ const (
 	apiURL                  = "https://api.cacophony.org.nz"
 	testAPIURL              = "https://api-test.cacophony.org.nz"
 	minionIDFile            = "/etc/salt/minion_id"
-	deviceConfigFile        = "/etc/cacophony/device.yaml"
-	devicePrivateConfigFile = "/etc/cacophony/device-priv.yaml"
 	minionIDPrefix          = "pi-"
 	minionIDTestPrefix      = "pi-test-"
 )
@@ -180,13 +179,14 @@ func writeToMinionIDFile(name string) error {
 }
 
 func deleteDeviceConfigFiles() error {
-	if err := removeFileIfExist(deviceConfigFile); err != nil {
+	conf, err := config.New(config.DefaultConfigDir)
+	if err != nil {
 		return err
 	}
-	if err := removeFileIfExist(devicePrivateConfigFile); err != nil {
+	if err := conf.Unset(config.SecretsKey); err != nil {
 		return err
 	}
-	return nil
+	return conf.Unset(config.DeviceKey)
 }
 
 func removeFileIfExist(path string) error {
