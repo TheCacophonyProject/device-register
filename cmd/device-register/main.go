@@ -40,8 +40,7 @@ const (
 	apiURL                  = "https://api.cacophony.org.nz"
 	testAPIURL              = "https://api-test.cacophony.org.nz"
 	minionIDFile            = "/etc/salt/minion_id"
-	minionIDPrefix          = "pi-"
-	minionIDTestPrefix      = "pi-test-"
+	defaultMinionIDPrefix   = "pi"
 )
 
 var version = "<not set>"
@@ -56,6 +55,7 @@ type Args struct {
 	Group              string `arg:"-g,--group" help:"new group name."`
 	Name               string `arg:"-n,--name" help:"new device name. If not given a random name will be generated"`
 	Password           string `arg:"-p,--password" help:"new password. If not given a random password will be generated"`
+	Prefix             string `arg:"--prefix" help:"prefix used in minion id"`
 }
 
 func (Args) Version() string {
@@ -64,8 +64,9 @@ func (Args) Version() string {
 
 func procArgs() Args {
 	args := Args{
-		API:   apiURL,
-		Group: defaultGroup,
+		API:    apiURL,
+		Group:  defaultGroup,
+		Prefix: defaultMinionIDPrefix,
 	}
 
 	arg.MustParse(&args)
@@ -150,11 +151,9 @@ func register(args Args) error {
 	log.Printf("devicename: '%s', deviceID: '%d', API: '%s'", args.Name, apiClient.DeviceID(), apiString)
 
 	if !args.IgnoreMinionID {
-		var name string
+		name := args.Prefix + "-"
 		if args.TestAPI {
-			name = minionIDTestPrefix
-		} else {
-			name = minionIDPrefix
+			name += "test-"
 		}
 		name = name + strconv.Itoa(apiClient.DeviceID())
 		if err := writeToMinionIDFile(name); err != nil {
