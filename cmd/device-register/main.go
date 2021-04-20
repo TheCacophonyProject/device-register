@@ -28,6 +28,7 @@ import (
 
 	"github.com/TheCacophonyProject/go-api"
 	config "github.com/TheCacophonyProject/go-config"
+	goconfig "github.com/TheCacophonyProject/go-config"
 	"github.com/TheCacophonyProject/modemd/connrequester"
 	arg "github.com/alexflint/go-arg"
 	petname "github.com/dustinkirkland/golang-petname"
@@ -41,21 +42,23 @@ const (
 	testAPIURL              = "https://api-test.cacophony.org.nz"
 	minionIDFile            = "/etc/salt/minion_id"
 	defaultMinionIDPrefix   = "pi"
+	retryWait               = 5 * time.Second
 )
 
 var version = "<not set>"
 
 type Args struct {
-	Reboot             bool   `arg:"-r,--reboot" help:"reboot device after registering"`
-	API                string `arg:"-a,--api" help:"url for the api server to register to"`
-	IgnoreMinionID     bool   `arg:"-i,--ignore-minion-id" help:"don't check or write to minion id file"`
-	RemoveDeviceConfig bool   `arg:"-d,--remove-device-config" help:"remove the device config files. This is useful if you need to register as a new device or to a different server. This normally wants to be used with '-i'"`
-	TestAPI            bool   `arg:"-t,--test-api" help:"use the test API. This will overwrite the API param"`
-	Reregister         bool   `arg:"--reregister" help:"reregister the device to the same API with a new name and group"`
-	Group              string `arg:"-g,--group" help:"new group name."`
-	Name               string `arg:"-n,--name" help:"new device name. If not given a random name will be generated"`
-	Password           string `arg:"-p,--password" help:"new password. If not given a random password will be generated"`
-	Prefix             string `arg:"--prefix" help:"prefix used in minion id"`
+	Reboot               bool   `arg:"-r,--reboot" help:"reboot device after registering"`
+	API                  string `arg:"-a,--api" help:"url for the api server to register to"`
+	IgnoreMinionID       bool   `arg:"-i,--ignore-minion-id" help:"don't check or write to minion id file"`
+	RemoveDeviceConfig   bool   `arg:"-d,--remove-device-config" help:"remove the device config files. This is useful if you need to register as a new device or to a different server. This normally wants to be used with '-i'"`
+	TestAPI              bool   `arg:"-t,--test-api" help:"use the test API. This will overwrite the API param"`
+	Reregister           bool   `arg:"--reregister" help:"reregister the device to the same API with a new name and group"`
+	Group                string `arg:"-g,--group" help:"new group name."`
+	Name                 string `arg:"-n,--name" help:"new device name. If not given a random name will be generated"`
+	Password             string `arg:"-p,--password" help:"new password. If not given a random password will be generated"`
+	Prefix               string `arg:"--prefix" help:"prefix used in minion id"`
+	RetryUntilRegistered bool   `arg:"--retry-until-registered" help:"will continue to try until it has registered"`
 }
 
 func (Args) Version() string {
@@ -110,8 +113,17 @@ func runMain() error {
 			return err
 		}
 	} else {
-		if err := register(args); err != nil {
-			return err
+		if args.RetryUntilRegistered {
+			for !isRegistered() {
+				if err := register(args); err != nil {
+					log.Printf("failed to register but will retry until registered. %v", err)
+					time.Sleep(retryWait)
+				}
+			}
+		} else {
+			if err := register(args); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -221,4 +233,18 @@ func reregister(args Args) error {
 	}
 	log.Printf("reregister with name '%s' and group '%s'", args.Name, args.Group)
 	return apiClient.Reregister(args.Name, args.Group, args.Password)
+}
+
+func isRegistered() bool {
+	configRW, err := goconfig.New(goconfig.DefaultConfigDir)
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+	var deviceConf goconfig.Device
+	if err := configRW.Unmarshal(goconfig.DeviceKey, &deviceConf); err != nil {
+		log.Println(err)
+		return false
+	}
+	return deviceConf.ID != 0
 }
