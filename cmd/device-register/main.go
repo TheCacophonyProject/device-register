@@ -27,8 +27,7 @@ import (
 	"time"
 
 	"github.com/TheCacophonyProject/go-api"
-	config "github.com/TheCacophonyProject/go-config"
-	goconfig "github.com/TheCacophonyProject/go-config"
+	"github.com/TheCacophonyProject/go-config"
 	"github.com/TheCacophonyProject/modemd/connrequester"
 	arg "github.com/alexflint/go-arg"
 	petname "github.com/dustinkirkland/golang-petname"
@@ -200,14 +199,6 @@ func deleteDeviceConfigFiles() error {
 	return conf.Unset(config.DeviceKey)
 }
 
-func removeFileIfExist(path string) error {
-	err := os.Remove(path)
-	if err == nil || os.IsNotExist(err) {
-		return nil
-	}
-	return err
-}
-
 func checkMinionIDFile() error {
 	raw, err := ioutil.ReadFile(minionIDFile)
 	if os.IsNotExist(err) {
@@ -236,13 +227,13 @@ func reregister(args Args) error {
 }
 
 func isRegistered() bool {
-	configRW, err := goconfig.New(goconfig.DefaultConfigDir)
+	configRW, err := config.New(config.DefaultConfigDir)
 	if err != nil {
 		log.Println(err)
 		return false
 	}
-	var deviceConf goconfig.Device
-	if err := configRW.Unmarshal(goconfig.DeviceKey, &deviceConf); err != nil {
+	var deviceConf config.Device
+	if err := configRW.Unmarshal(config.DeviceKey, &deviceConf); err != nil {
 		log.Println(err)
 		return false
 	}
