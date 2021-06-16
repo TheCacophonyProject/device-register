@@ -5,6 +5,8 @@ github.com/Masterminds/glide v0.13.2/go.mod h1:STyF5vcenH/rUqTEv+/hBXlSTo7KYwg2o
 github.com/Masterminds/semver v1.4.2/go.mod h1:MB6lktGJrhw8PrUyiEoblNEGEQ+RzHPF078ddwwvV3Y=
 github.com/Masterminds/vcs v1.13.0/go.mod h1:N09YCmOQr6RLxC6UNHzuVwAdodYbbnycGHSmwVJjcKA=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
+github.com/TheCacophonyProject/go-api v1.0.0 h1:xwhp0Clsz+jMDq/IePAPi9vyEHZfVU7Q+eNkf/19ZIc=
+github.com/TheCacophonyProject/go-api v1.0.0/go.mod h1:ryJINhQTNWexWTnCUHM1LwEX+2loUp9ueB/1WB7Siyc=
 github.com/TheCacophonyProject/go-config v1.4.0 h1:G7YOqMrRljWQ0BWVHJiZNe79KaMNJMP5QyCa2fP27cs=
 github.com/TheCacophonyProject/go-config v1.4.0/go.mod h1:oARW/N3eJbcewCqB+Jc7TBwuODawwYgpo56UO6yBdKU=
 github.com/TheCacophonyProject/modemd v0.0.0-20190708011609-1940f5b6677b h1:iJVZlC3nzjJ2EoWLBr7zKhL7t9hUleghmUIC+3ObB88=
