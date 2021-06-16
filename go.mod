@@ -9,3 +9,5 @@ require (
 	github.com/alexflint/go-arg v1.1.0
 	github.com/dustinkirkland/golang-petname v0.0.0-20190613200456-11339a705ed2
 )
+
+replace github.com/TheCacophonyProject/go-api => ../go-api
