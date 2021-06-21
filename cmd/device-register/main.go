@@ -24,6 +24,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/TheCacophonyProject/go-api"
@@ -49,8 +50,7 @@ var version = "<not set>"
 type Args struct {
 	Reboot               bool   `arg:"-r,--reboot" help:"reboot device after registering"`
 	API                  string `arg:"-a,--api" help:"url for the api server to register to"`
-	IgnoreMinionID       bool   `arg:"-i,--ignore-minion-id" help:"don't check or write to minion id file"`
-	RemoveDeviceConfig   bool   `arg:"-d,--remove-device-config" help:"remove the device config files. This is useful if you need to register as a new device or to a different server. This normally wants to be used with '-i'"`
+	RemoveDeviceConfig   bool   `arg:"-d,--remove-device-config" help:"remove the device config files. This is useful if you need to register as a new device or to a different server."`
 	TestAPI              bool   `arg:"-t,--test-api" help:"use the test API. This will overwrite the API param"`
 	Reregister           bool   `arg:"--reregister" help:"reregister the device to the same API with a new name and group"`
 	Group                string `arg:"-g,--group" help:"new group name."`
@@ -142,10 +142,9 @@ func register(args Args) error {
 	}
 	apiString := apiURL.String()
 
-	if !args.IgnoreMinionID {
-		if err := checkMinionIDFile(); err != nil {
-			return err
-		}
+	saltId, err := checkMinionIDFile()
+	if err != nil {
+		return err
 	}
 
 	if args.RemoveDeviceConfig {
@@ -154,19 +153,15 @@ func register(args Args) error {
 		}
 	}
 
-	apiClient, err := api.Register(args.Name, args.Password, args.Group, apiString)
+	apiClient, err := api.Register(args.Name, args.Password, args.Group, apiString, saltId)
 	if err != nil {
 		return err
 	}
 	log.Println("registered")
 	log.Printf("devicename: '%s', deviceID: '%d', API: '%s'", args.Name, apiClient.DeviceID(), apiString)
 
-	if !args.IgnoreMinionID {
-		name := args.Prefix + "-"
-		if args.TestAPI {
-			name += "test-"
-		}
-		name = name + strconv.Itoa(apiClient.DeviceID())
+	if saltId == 0 {
+		name := args.Prefix + "-" + strconv.Itoa(apiClient.DeviceID())
 		if err := writeToMinionIDFile(name); err != nil {
 			return err
 		}
@@ -199,22 +194,28 @@ func deleteDeviceConfigFiles() error {
 	return conf.Unset(config.DeviceKey)
 }
 
-func checkMinionIDFile() error {
+func checkMinionIDFile() (int, error) {
 	raw, err := ioutil.ReadFile(minionIDFile)
 	if os.IsNotExist(err) {
-		return nil
+		return 0, nil
 	} else if err != nil {
-		return err
+		return 0, err
 	}
 	log.Println("minion id file exists already, reading id file")
 	if len(raw) == 0 {
 		log.Println("minion id is empty. Will make new minion id")
 	} else {
-		log.Println("minion ID:", string(raw))
-		log.Println("exiting as minion ID is already set")
-		os.Exit(0)
+		rawStr := string(raw)
+		intStr := rawStr[strings.LastIndex(rawStr, "-")+1:]
+		saltId, err := strconv.Atoi(intStr)
+		if err != nil {
+			log.Printf("failed to extract salt ID from '%s'", string(raw))
+			return 0, nil
+		}
+		log.Println("minion ID:", saltId)
+		return saltId, nil
 	}
-	return nil
+	return 0, nil
 }
 
 func reregister(args Args) error {
