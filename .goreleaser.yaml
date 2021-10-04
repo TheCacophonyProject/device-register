@@ -28,8 +28,11 @@ nfpms:
     formats:
       - deb
     bindir: /usr/bin
-    files:
-      "_release/device-register.service": "/etc/systemd/system/device-register.service"
+    contents:
+      - src: _release/device-register.service
+        dst: /etc/systemd/system/device-register.service
+    scripts:
+      postinstall: "_release/postinstall.sh"
 checksum:
   name_template: '{{ .ProjectName }}_{{ .Version }}_checksums.txt'
 dist: dist
