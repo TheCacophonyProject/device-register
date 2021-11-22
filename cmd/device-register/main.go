@@ -27,6 +27,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/TheCacophonyProject/event-reporter/v3/eventclient"
 	"github.com/TheCacophonyProject/go-api"
 	"github.com/TheCacophonyProject/go-config"
 	"github.com/TheCacophonyProject/modemd/connrequester"
@@ -184,6 +185,10 @@ func writeToMinionIDFile(name string) error {
 }
 
 func deleteDeviceConfigFiles() error {
+	// Want to upload previous devices events first
+	if err := eventclient.UploadEvents(); err != nil {
+		return err
+	}
 	conf, err := config.New(config.DefaultConfigDir)
 	if err != nil {
 		return err
@@ -219,6 +224,11 @@ func checkMinionIDFile() (int, error) {
 }
 
 func reregister(args Args) error {
+	// Want to upload previous devices events first
+	if err := eventclient.UploadEvents(); err != nil {
+		return err
+	}
+
 	apiClient, err := api.New()
 	if err != nil {
 		return err
