@@ -181,7 +181,7 @@ func writeToMinionIDFile(name string) error {
 	if _, err := f.WriteString(name); err != nil {
 		return err
 	}
-	return nil
+	return f.Sync()
 }
 
 func deleteDeviceConfigFiles() error {
