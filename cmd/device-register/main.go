@@ -17,7 +17,6 @@
 package main
 
 import (
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/url"
@@ -99,13 +98,13 @@ func main() {
 func runMain() error {
 	log.SetFlags(0) // Removes default timestamp flag
 	args := procArgs()
-	log.Printf("running version: %s", version)
+	log.Printf("Running version: %s", version)
 
 	cr := connrequester.NewConnectionRequester()
-	log.Println("requesting internet connection")
+	log.Println("Requesting internet connection.")
 	cr.Start()
 	cr.WaitUntilUpLoop(connectionTimeout, connectionRetryInterval, -1)
-	log.Println("internet connection made")
+	log.Println("Internet connection made.")
 	defer cr.Stop()
 
 	if args.Reregister {
@@ -113,10 +112,14 @@ func runMain() error {
 			return err
 		}
 	} else {
+		if isRegistered() {
+			log.Println("Device is already registered, will not register again.")
+			return nil
+		}
 		if args.RetryUntilRegistered {
 			for !isRegistered() {
 				if err := register(args); err != nil {
-					log.Printf("failed to register but will retry until registered. %v", err)
+					log.Printf("Failed to register but will retry until registered. %v", err)
 					time.Sleep(retryWait)
 				}
 			}
@@ -128,7 +131,7 @@ func runMain() error {
 	}
 
 	if args.Reboot {
-		log.Println("restarting device")
+		log.Println("Restarting device.")
 		if err := exec.Command("reboot").Run(); err != nil {
 			return err
 		}
@@ -158,8 +161,8 @@ func register(args Args) error {
 	if err != nil {
 		return err
 	}
-	log.Println("registered")
-	log.Printf("devicename: '%s', deviceID: '%d', API: '%s'", args.Name, apiClient.DeviceID(), apiString)
+	log.Println("Registered")
+	log.Printf("deviceName: '%s', deviceID: '%d', API: '%s'", args.Name, apiClient.DeviceID(), apiString)
 
 	if saltId == 0 {
 		name := args.Prefix + "-" + strconv.Itoa(apiClient.DeviceID())
@@ -177,7 +180,7 @@ func writeToMinionIDFile(name string) error {
 	}
 	defer f.Close()
 
-	log.Printf("setting minion id to '%s'", name)
+	log.Printf("Setting minion id to '%s'", name)
 	if _, err := f.WriteString(name); err != nil {
 		return err
 	}
@@ -200,24 +203,24 @@ func deleteDeviceConfigFiles() error {
 }
 
 func checkMinionIDFile() (int, error) {
-	raw, err := ioutil.ReadFile(minionIDFile)
+	raw, err := os.ReadFile(minionIDFile)
 	if os.IsNotExist(err) {
 		return 0, nil
 	} else if err != nil {
 		return 0, err
 	}
-	log.Println("minion id file exists already, reading id file")
+	log.Println("Minion id file exists already, reading id file.")
 	if len(raw) == 0 {
-		log.Println("minion id is empty. Will make new minion id")
+		log.Println("Minion id is empty. Will make new minion id.")
 	} else {
 		rawStr := string(raw)
 		intStr := rawStr[strings.LastIndex(rawStr, "-")+1:]
 		saltId, err := strconv.Atoi(intStr)
 		if err != nil {
-			log.Printf("failed to extract salt ID from '%s'", string(raw))
+			log.Printf("Failed to extract salt ID from '%s'", string(raw))
 			return 0, nil
 		}
-		log.Println("minion ID:", saltId)
+		log.Println("Minion ID:", saltId)
 		return saltId, nil
 	}
 	return 0, nil
@@ -233,7 +236,7 @@ func reregister(args Args) error {
 	if err != nil {
 		return err
 	}
-	log.Printf("reregister with name '%s' and group '%s'", args.Name, args.Group)
+	log.Printf("Reregister with name '%s' and group '%s'", args.Name, args.Group)
 	return apiClient.Reregister(args.Name, args.Group, args.Password)
 }
 
