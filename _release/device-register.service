@@ -1,7 +1,6 @@
 [Unit]
 Description=Cacophony device register service
 After=multi-user.target network.target
-ConditionPathExists=!/etc/salt/minion_id
 
 [Service]
 ExecStart=/usr/bin/device-register --reboot --retry-until-registered

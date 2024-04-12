@@ -18,7 +18,6 @@ package main
 
 import (
 	"log"
-	"math/rand"
 	"net/url"
 	"os"
 	"os/exec"
@@ -88,7 +87,6 @@ func procArgs() Args {
 }
 
 func main() {
-	rand.Seed(time.Now().UnixNano())
 	err := runMain()
 	if err != nil {
 		log.Fatal(err)
