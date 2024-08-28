@@ -17,7 +17,6 @@
 package main
 
 import (
-	"log"
 	"net/url"
 	"os"
 	"os/exec"
@@ -28,9 +27,11 @@ import (
 	"github.com/TheCacophonyProject/event-reporter/v3/eventclient"
 	"github.com/TheCacophonyProject/go-api"
 	"github.com/TheCacophonyProject/go-config"
+	"github.com/TheCacophonyProject/go-utils/logging"
 	"github.com/TheCacophonyProject/modemd/connrequester"
 	arg "github.com/alexflint/go-arg"
 	petname "github.com/dustinkirkland/golang-petname"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -45,6 +46,7 @@ const (
 )
 
 var version = "<not set>"
+var log *logrus.Logger
 
 type Args struct {
 	Reboot               bool   `arg:"-r,--reboot" help:"reboot device after registering"`
@@ -57,6 +59,7 @@ type Args struct {
 	Password             string `arg:"-p,--password" help:"new password. If not given a random password will be generated"`
 	Prefix               string `arg:"--prefix" help:"prefix used in minion id"`
 	RetryUntilRegistered bool   `arg:"--retry-until-registered" help:"will continue to try until it has registered"`
+	logging.LogArgs
 }
 
 func (Args) Version() string {
@@ -94,8 +97,10 @@ func main() {
 }
 
 func runMain() error {
-	log.SetFlags(0) // Removes default timestamp flag
 	args := procArgs()
+
+	log = logging.NewLogger(args.LogLevel)
+
 	log.Printf("Running version: %s", version)
 
 	cr := connrequester.NewConnectionRequester()
