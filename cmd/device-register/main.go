@@ -31,7 +31,6 @@ import (
 	"github.com/TheCacophonyProject/modemd/connrequester"
 	arg "github.com/alexflint/go-arg"
 	petname "github.com/dustinkirkland/golang-petname"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -46,7 +45,7 @@ const (
 )
 
 var version = "<not set>"
-var log *logrus.Logger
+var log = logging.NewLogger("info")
 
 type Args struct {
 	Reboot               bool   `arg:"-r,--reboot" help:"reboot device after registering"`
@@ -98,8 +97,6 @@ func main() {
 
 func runMain() error {
 	args := procArgs()
-
-	log = logging.NewLogger(args.LogLevel)
 
 	log.Printf("Running version: %s", version)
 
