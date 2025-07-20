@@ -1,4 +1,7 @@
 project_name: device-register
+
+version: 2
+
 release:
   github:
     owner: TheCacophonyProject
@@ -11,7 +14,7 @@ builds:
   - linux
   goarch:
   - arm
-  - amd64
+  - arm64
   goarm:
   - "7"
   main: ./cmd/device-register
