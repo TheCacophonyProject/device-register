@@ -4,6 +4,7 @@ After=multi-user.target network.target
 
 [Service]
 ExecStart=/usr/bin/device-register --reboot --retry-until-registered
+ConditionPathExists=!/etc/salt/minion_id
 Type=oneshot
 
 [Install]

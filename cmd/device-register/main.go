@@ -99,32 +99,52 @@ func runMain() error {
 	args := procArgs()
 
 	log.Printf("Running version: %s", version)
-
 	cr := connrequester.NewConnectionRequester()
-	log.Println("Requesting internet connection.")
-	cr.Start()
-	cr.WaitUntilUpLoop(connectionTimeout, connectionRetryInterval, -1)
-	log.Println("Internet connection made.")
-	defer cr.Stop()
 
 	if args.Reregister {
+		log.Println("Requesting internet connection for reregister (rename).")
+		cr.Start()
+		cr.WaitUntilUpLoop(connectionTimeout, connectionRetryInterval, -1)
+		log.Println("Internet connection made.")
+		defer cr.Stop()
 		if err := reregister(args); err != nil {
 			return err
 		}
 	} else {
+		// Remove the device section from the config file, this is so it can register as a new device or to a different server.
+		if args.RemoveDeviceConfig {
+			if err := deleteDeviceConfigFiles(); err != nil {
+				return err
+			}
+		}
+
+		// If the device is already registered, don't register again.
 		if isRegistered() {
-			log.Println("Device is already registered, will not register again.")
+			log.Println("Device is already registered, will not register again. If you want to rename use `--reregister` or if you want to register to a different server/new device use `--remove-device-config`")
 			return nil
 		}
+		log.Println("Requesting internet connection for registration.")
+		cr.Start()
+		cr.WaitUntilUpLoop(connectionTimeout, connectionRetryInterval, -1)
+		log.Println("Internet connection made.")
+		defer cr.Stop()
+
 		if args.RetryUntilRegistered {
-			for !isRegistered() {
-				if err := register(args); err != nil {
-					log.Printf("Failed to register but will retry until registered. %v", err)
-					time.Sleep(retryWait)
+			// Try to register multiple times
+			for {
+				err := register(args)
+				if err == nil {
+					log.Println("Registered.")
+					break
 				}
+				log.Printf("Failed to register: %v", err)
+				log.Println("Will retry until registered.")
+				time.Sleep(retryWait)
 			}
 		} else {
-			if err := register(args); err != nil {
+			// Just try to register once
+			err := register(args)
+			if err != nil {
 				return err
 			}
 		}
@@ -149,12 +169,6 @@ func register(args Args) error {
 	saltId, err := checkMinionIDFile()
 	if err != nil {
 		return err
-	}
-
-	if args.RemoveDeviceConfig {
-		if err := deleteDeviceConfigFiles(); err != nil {
-			return err
-		}
 	}
 
 	apiClient, err := api.Register(args.Name, args.Password, args.Group, apiString, saltId)
