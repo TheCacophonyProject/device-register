@@ -1,6 +1,6 @@
 module github.com/TheCacophonyProject/device-register
 
-go 1.24.5
+go 1.25.0
 
 require (
 	github.com/TheCacophonyProject/event-reporter/v3 v3.9.0
